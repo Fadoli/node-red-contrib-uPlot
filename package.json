@@ -1,0 +1,24 @@
+{
+    "name": "@fadoli/node-red-fast-running-stats",
+    "version": "1.0.0",
+    "description": "A node-red node for fast-running-stats",
+    "scripts": {
+        "test": "c8 pta"
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+        "c8": "7.10.0",
+        "node-red": "^2.0.0",
+        "node-red-node-test-helper": "0.2.7",
+        "pta": "^1.0.0",
+        "zora": "^5.0.0"
+    },
+    "author": "",
+    "license": "ISC",
+    "node-red": {
+        "nodes": {
+            "fast_stat": "./src/index.js"
+        }
+    }
+}
