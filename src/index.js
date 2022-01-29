@@ -3,15 +3,44 @@ const path = require("path");
 
 module.exports = function(RED) {
     
-    uplot = fs.readFileSync(path.join(__dirname, 'external', 'uPlot.min.js'));
-    baseHtml = ``;
+    function getMyExternalPath(fname) {
+        return path.join(__dirname, 'external', fname)
+    }
+    const uplot = {
+        js: fs.readFileSync(getMyExternalPath('uPlot.min.js')),
+        css: fs.readFileSync(getMyExternalPath('uPlot.min.css'))
+    };
 
-    function fillRequest (req,res) {
-        res.send(baseHtml);
+    function getMyGraphPath(fname) {
+        return path.join(__dirname, 'graph', fname)
+    }
+    const graphTypes = {
+        simpleChart: fs.readFileSync(getMyGraphPath('chart.js')),
     }
 
-    RED.httpNode.get('/fadoli/',fillRequest,this.errorHandler);
-    RED.httpNode.get('/fadoli/',fillRequest,this.errorHandler);
+    function fillRequest (req,res) {
+        if (req.param.subPath === 'uPlot.min.js') {
+            return res.send(uplot.js);
+        } else if (req.param.subPath === 'uPlot.min.css') {
+            return res.send(uplot.css);
+        } else if (req.param.subPath === 'chart.js') {
+            return res.send(graphTypes.simpleChart);
+        } else {
+            return res.status(404).send("Not found");
+        }
+    }
+    function getDataFromNode (req,res) {
+        try {
+            const mynode = RED.nodes.getNode(req.param.nodeid);
+            res.send(JSON.stringify(mynode.getData()));
+        } catch (e) {
+            return res.status(500).send(e.message);
+        }
+    }
+
+    RED.httpNode.get('/fadoli/:subPath',fillRequest,this.errorHandler);
+    RED.httpNode.get('/fadoli/data/:nodeid',getDataFromNode,this.errorHandler);
+
     function defineNode(config) {
         RED.nodes.createNode(this,config);
         const nbElem = 1 * (config.size || '10');
@@ -41,6 +70,10 @@ module.exports = function(RED) {
             send(msg);
             done();
         })
+
+        node.getData = function () {
+
+        }
     }
     RED.nodes.registerType("fast_stats",defineNode);
 }
