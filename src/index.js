@@ -42,38 +42,57 @@ module.exports = function(RED) {
     RED.httpNode.get('/fadoli/data/:nodeid',getDataFromNode,this.errorHandler);
 
     function defineNode(config) {
-        RED.nodes.createNode(this,config);
-        const nbElem = 1 * (config.size || '10');
+        RED.nodes.createNode(this, config);
+        const nbElem = 1 * (config.size || '100');
         const node = this;
 
         /**
          * This is a map for each numerical value in the payload, we will have a statsArray object
-         * @type {Object.<string,statsArray>}
+         * @type {Object.<string,Array<number>>}
          */
         const elements = {};
-        node.on('input', (msg,send,done) => {
-            const keys = Object.keys(msg.payload);
-            const result = {};
-            keys.forEach((key) => {
-                const value = msg.payload[key];
-                if (typeof value === 'number') {
-                    if (!elements[key]) {
-                        elements[key] = new statsArray(nbElem);
-                    }
-                    elements[key].append(value);
-                    result[key] = elements[key].getStats();
-                } else {
-                    result[key] = value;
-                }
-            })
-            msg.payload = result;
-            send(msg);
-            done();
-        })
 
         node.getData = function () {
-
+            return elements;
         }
+
+        function handleValue(key, value) {
+            if (!elements[key]) {
+                elements[key] = [];
+            }
+            if (elements[key].length > 2 * nbElem) {
+                const dif = elements[key].length - nbElem;
+                elements[key] = elements[key].slice(dif)
+            }
+            return elements[key].push(value);
+        }
+        function handleObject(obj, prefix = '') {
+            const keys = Object.keys(obj);
+            keys.forEach((key) => {
+                const completeKey = `${prefix}${key}`
+                const value = obj[key];
+                if (typeof value === 'number') {
+                    obj[key] = handleValue(completeKey, value);
+                } else if (typeof value === 'object') {
+                    handleObject(obj[key], `${completeKey}.`);
+                }
+            })
+            return;
+        }
+
+        node.on('input', (msg, send, done) => {
+            try {
+                if (typeof msg.payload === "object") {
+                    handleObject(msg.payload);
+                } else if (typeof msg.payload === "number") {
+                    msg.payload = handleValue("payload", msg.payload);
+                }
+                send(msg);
+                done();
+            } catch (e) {
+                done(e);
+            }
+        })
     }
-    RED.nodes.registerType("fast_stats",defineNode);
+    RED.nodes.registerType("uPlot",defineNode);
 }

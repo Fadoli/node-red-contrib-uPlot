@@ -1,7 +1,7 @@
 {
-    "name": "@fadoli/node-red-fast-running-stats",
+    "name": "@fadoli/node-red-uPlot",
     "version": "1.0.0",
-    "description": "A node-red node for fast-running-stats",
+    "description": "A node-red node for doing fast graph using uPlot",
     "scripts": {
         "test": "c8 pta"
     },
@@ -18,7 +18,7 @@
     "license": "ISC",
     "node-red": {
         "nodes": {
-            "fast_stat": "./src/index.js"
+            "uPlot": "./src/index.js"
         }
     }
 }
