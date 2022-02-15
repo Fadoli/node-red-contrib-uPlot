@@ -8,7 +8,7 @@ const testFlow = [
     { "id": "helper_node", "type": "helper"},
 ];
 
-test("statsArray", async (t) => {
+test("uPlot", async (t) => {
     await t.test('Should properly load', async function (t) {
         await helper.load(node, testFlow, {});
 

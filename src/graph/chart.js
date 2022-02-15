@@ -8,18 +8,19 @@ const parsedData = {
     height: 768,
     x: {
         isDate: true,
-        data: [101,102,103]
+        data: [101, 102, 103]
     },
     data: {
         "Variable1": [
-            3,2,1
+            3, 2, 1
         ],
         "Variable2": [
-            1,2,3
+            1, 2, 3
         ],
     }
 }
 
+let uplot;
 
 function prepData(parsedData) {
     console.time("chart");
@@ -34,7 +35,7 @@ function prepData(parsedData) {
         })
         drawData.push(parsedData.data[key]);
     })
-    
+
 
     const opts = {
         title: parsedData.title,
@@ -42,14 +43,18 @@ function prepData(parsedData) {
         height: parsedData.height,
         series: seriesData,
         scales: {
-          "x": {
-            time: parsedData.x?.isDate || true,
-          }
+            "x": {
+                time: parsedData.x?.isDate || true,
+            }
         },
     }
 
-    let uplot = new uPlot(opts, drawData, document.body);
-    
+    if (!uplot) {
+        uplot = new uPlot(opts, drawData, document.body);
+    } else {
+        uplot.setData(drawData);
+    }
+
     wait.textContent = "Done!";
     console.timeEnd("chart");
 }
@@ -57,9 +62,13 @@ function prepData(parsedData) {
 let wait = document.getElementById("wait");
 
 wait.textContent = "Fetching data ...";
-fetch(dataSource)
-    .then(r => r.json())
-    .then(parsedObject => {
-        wait.textContent = "Rendering ...";
-        setImmediate(() => prepData(parsedObject));
-    });
+function update() {
+    fetch(dataSource)
+        .then(r => r.json())
+        .then(parsedObject => {
+            wait.textContent = "Rendering ...";
+            setTimeout(() => prepData(parsedObject), 5);
+        });
+}
+
+setInterval(update, 100);

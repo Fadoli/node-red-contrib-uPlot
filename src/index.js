@@ -1,8 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const webtemplate = require("./webTemplate");
 
-module.exports = function(RED) {
-    
+module.exports = function (RED) {
+
     function getMyExternalPath(fname) {
         return path.join(__dirname, 'external', fname)
     }
@@ -18,28 +19,35 @@ module.exports = function(RED) {
         simpleChart: fs.readFileSync(getMyGraphPath('chart.js')),
     }
 
-    function fillRequest (req,res) {
-        if (req.param.subPath === 'uPlot.min.js') {
+    function fillRequest(req, res) {
+        if (req.params.subPath === 'main') {
+            res.setHeader('content-type', 'text/html');
+            return res.send(webtemplate.base('my graph', './data/9c9e9b30.48e758'));
+        } else if (req.params.subPath === 'uPlot.min.js') {
+            res.setHeader('content-type', 'text/javascript');
             return res.send(uplot.js);
-        } else if (req.param.subPath === 'uPlot.min.css') {
+        } else if (req.params.subPath === 'uPlot.min.css') {
+            res.setHeader('content-type', 'text/css');
             return res.send(uplot.css);
-        } else if (req.param.subPath === 'chart.js') {
+        } else if (req.params.subPath === 'chart.js') {
+            res.setHeader('content-type', 'text/javascript');
             return res.send(graphTypes.simpleChart);
         } else {
             return res.status(404).send("Not found");
         }
     }
-    function getDataFromNode (req,res) {
+
+    function getDataFromNode(req, res) {
         try {
-            const mynode = RED.nodes.getNode(req.param.nodeid);
+            const mynode = RED.nodes.getNode(req.params.nodeid);
             res.send(JSON.stringify(mynode.getData()));
         } catch (e) {
             return res.status(500).send(e.message);
         }
     }
 
-    RED.httpNode.get('/fadoli/:subPath',fillRequest,this.errorHandler);
-    RED.httpNode.get('/fadoli/data/:nodeid',getDataFromNode,this.errorHandler);
+    RED.httpNode.get('/fadoli/:subPath', fillRequest);
+    RED.httpNode.get('/fadoli/data/:nodeid', getDataFromNode);
 
     function defineNode(config) {
         RED.nodes.createNode(this, config);
@@ -53,9 +61,37 @@ module.exports = function(RED) {
         const elements = {};
 
         node.getData = function () {
-            return elements;
+            const keys = Object.keys(elements);
+            const len = elements.x.length;
+            const sliceStart = Math.max(0, len - nbElem);
+
+            const base = {
+                title: node.name || node.id,
+                width: 1024,
+                height: 768,
+                x: {
+                    isDate: true,
+                    data: elements.x.slice(sliceStart)
+                },
+                data: {
+
+                }
+            }
+            keys.forEach((key) => {
+                if (key === 'x') {
+                    return;
+                }
+                base.data[key] = elements[key].slice(sliceStart);
+            })
+            return base;
         }
 
+        /**
+         * @description Handle a value
+         * @param {string} key
+         * @param {number} value
+         * @returns {Array<number>}
+         */
         function handleValue(key, value) {
             if (!elements[key]) {
                 elements[key] = [];
@@ -66,6 +102,11 @@ module.exports = function(RED) {
             }
             return elements[key].push(value);
         }
+        /**
+         * @description Handle an object
+         * @param {Object} obj
+         * @param {string} [prefix='']
+         */
         function handleObject(obj, prefix = '') {
             const keys = Object.keys(obj);
             keys.forEach((key) => {
@@ -82,6 +123,7 @@ module.exports = function(RED) {
 
         node.on('input', (msg, send, done) => {
             try {
+                handleValue("x", Date.now()/1000);
                 if (typeof msg.payload === "object") {
                     handleObject(msg.payload);
                 } else if (typeof msg.payload === "number") {
@@ -94,5 +136,5 @@ module.exports = function(RED) {
             }
         })
     }
-    RED.nodes.registerType("uPlot",defineNode);
+    RED.nodes.registerType("uPlot", defineNode);
 }
