@@ -1,7 +1,7 @@
 const colors = [
     "green", "blue", "red", "orange", "purple", "cadetblue"
 ]
-
+/*
 const parsedData = {
     title: 'Myname',
     width: 1024,
@@ -19,7 +19,7 @@ const parsedData = {
         ],
     }
 }
-
+*/
 let uplot;
 
 function prepData(parsedData) {
@@ -71,4 +71,4 @@ function update() {
         });
 }
 
-setInterval(update, 100);
+setInterval(update, 50);

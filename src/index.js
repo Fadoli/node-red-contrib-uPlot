@@ -3,6 +3,7 @@ const path = require("path");
 const webtemplate = require("./webTemplate");
 
 module.exports = function (RED) {
+    const nodeList = {};
 
     function getMyExternalPath(fname) {
         return path.join(__dirname, 'external', fname)
@@ -19,11 +20,30 @@ module.exports = function (RED) {
         simpleChart: fs.readFileSync(getMyGraphPath('chart.js')),
     }
 
-    function fillRequest(req, res) {
-        if (req.params.subPath === 'main') {
+    function nodeSelection(req, res) {
+        if (Object.keys(nodeList).length === 0) {
+            return res.status(404).send("No node found");
+        } else {
             res.setHeader('content-type', 'text/html');
-            return res.send(webtemplate.base('my graph', './data/9c9e9b30.48e758'));
-        } else if (req.params.subPath === 'uPlot.min.js') {
+            return res.send(webtemplate.displayList(Object.values(nodeList)));
+        }
+    }
+    function fillGraphRequest(req, res) {
+        res.setHeader('content-type', 'text/html');
+        if (req.params.type === 'data') {
+            try {
+                const mynode = RED.nodes.getNode(req.params.id);
+                return res.send(JSON.stringify(mynode.getData()));
+            } catch (e) {
+                return res.status(500).send(e.message);
+            }
+        }
+        // graph type should be `req.params.type`
+        return res.send(webtemplate.baseGraph('my graph', `./data`));
+    }
+
+    function fillRequest(req, res) {
+        if (req.params.subPath === 'uPlot.min.js') {
             res.setHeader('content-type', 'text/javascript');
             return res.send(uplot.js);
         } else if (req.params.subPath === 'uPlot.min.css') {
@@ -37,22 +57,15 @@ module.exports = function (RED) {
         }
     }
 
-    function getDataFromNode(req, res) {
-        try {
-            const mynode = RED.nodes.getNode(req.params.nodeid);
-            res.send(JSON.stringify(mynode.getData()));
-        } catch (e) {
-            return res.status(500).send(e.message);
-        }
-    }
-
+    RED.httpNode.get('/fadoli/', nodeSelection);
     RED.httpNode.get('/fadoli/:subPath', fillRequest);
-    RED.httpNode.get('/fadoli/data/:nodeid', getDataFromNode);
+    RED.httpNode.get('/fadoli/:id/:type', fillGraphRequest);
 
     function defineNode(config) {
-        RED.nodes.createNode(this, config);
-        const nbElem = 1 * (config.size || '100');
         const node = this;
+        RED.nodes.createNode(node, config);
+        nodeList[node.id] = node;
+        const nbElem = 1 * (config.size || '100');
 
         /**
          * This is a map for each numerical value in the payload, we will have a statsArray object
@@ -134,6 +147,10 @@ module.exports = function (RED) {
             } catch (e) {
                 done(e);
             }
+        })
+        node.on('close', (done) => {
+            delete nodeList[node.id];
+            done();
         })
     }
     RED.nodes.registerType("uPlot", defineNode);
