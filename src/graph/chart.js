@@ -23,50 +23,42 @@ const parsedData = {
 let uplot;
 
 function prepData(parsedData) {
-    console.time("chart");
     const drawData = [parsedData.x.data];
-    const seriesData = [{}];
-    let progress = 0;
-
-    Object.keys(parsedData.data).forEach((key) => {
-        seriesData.push({
-            label: key,
-            stroke: colors[(progress++) % colors.length]
-        })
-        drawData.push(parsedData.data[key]);
-    })
-
-
-    const opts = {
-        title: parsedData.title,
-        width: parsedData.width,
-        height: parsedData.height,
-        series: seriesData,
-        scales: {
-            "x": {
-                time: parsedData.x?.isDate || true,
-            }
-        },
-    }
 
     if (!uplot) {
+        let progress = 0;
+        const seriesData = [{}];
+        Object.keys(parsedData.data).forEach((key) => {
+            seriesData.push({
+                label: key,
+                stroke: colors[(progress++) % colors.length]
+            })
+            drawData.push(parsedData.data[key]);
+        })
+        const opts = {
+            title: parsedData.title,
+            width: parsedData.width,
+            height: parsedData.height,
+            series: seriesData,
+            scales: {
+                "x": {
+                    time: parsedData.x?.isDate || true,
+                }
+            },
+        }
         uplot = new uPlot(opts, drawData, document.body);
     } else {
+        Object.keys(parsedData.data).forEach((key) => {
+            drawData.push(parsedData.data[key]);
+        })
         uplot.setData(drawData);
     }
-
-    wait.textContent = "Done!";
-    console.timeEnd("chart");
 }
 
-let wait = document.getElementById("wait");
-
-wait.textContent = "Fetching data ...";
 function update() {
     fetch(dataSource)
         .then(r => r.json())
         .then(parsedObject => {
-            wait.textContent = "Rendering ...";
             setTimeout(() => prepData(parsedObject), 5);
         });
 }

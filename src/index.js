@@ -29,17 +29,17 @@ module.exports = function (RED) {
         }
     }
     function fillGraphRequest(req, res) {
-        res.setHeader('content-type', 'text/html');
-        if (req.params.type === 'data') {
-            try {
-                const mynode = RED.nodes.getNode(req.params.id);
+        try {
+            const mynode = RED.nodes.getNode(req.params.id);
+            if (req.params.type === 'data') {
                 return res.send(JSON.stringify(mynode.getData()));
-            } catch (e) {
-                return res.status(500).send(e.message);
             }
+            res.setHeader('content-type', 'text/html');
+            // graph type should be `req.params.type`
+            return res.send(webtemplate.baseGraph(mynode));
+        } catch (e) {
+            return res.status(500).send(e.message);
         }
-        // graph type should be `req.params.type`
-        return res.send(webtemplate.baseGraph('my graph', `./data`));
     }
 
     function fillRequest(req, res) {
