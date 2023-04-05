@@ -5,12 +5,11 @@
     "scripts": {
         "test": "c8 pta"
     },
-    "dependencies": {
-    },
+    "dependencies": {},
     "devDependencies": {
         "c8": "^7.10.0",
-        "node-red": "^2.0.0",
-        "node-red-node-test-helper": "0.2.7",
+        "node-red": "^3.0.0",
+        "node-red-node-test-helper": "0.3.0",
         "pta": "^1.0.0",
         "zora": "^5.0.0"
     },
