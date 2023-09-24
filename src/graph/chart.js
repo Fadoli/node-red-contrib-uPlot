@@ -64,7 +64,6 @@ function tooltipPlugin(opts) {
                 const { left, top, idx } = u.cursor;
                 const anchor = { left: left + bLeft, top: top + bTop };
                 let str = []
-                console.log(u);
                 u.data.forEach((entry,seriesIndex) => {
                     const value = entry[idx];
                     const name = u.series[seriesIndex].label

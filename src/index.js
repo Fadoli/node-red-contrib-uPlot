@@ -136,13 +136,14 @@ module.exports = function (RED) {
 
         node.on('input', (msg, send, done) => {
             try {
-                handleValue("x", Date.now()/1000);
+                if (!msg.payload.x) {
+                    handleValue("x", Date.now()/1000);
+                }
                 if (typeof msg.payload === "object") {
                     handleObject(msg.payload);
                 } else if (typeof msg.payload === "number") {
                     msg.payload = handleValue("payload", msg.payload);
                 }
-                send(msg);
                 done();
             } catch (e) {
                 done(e);
