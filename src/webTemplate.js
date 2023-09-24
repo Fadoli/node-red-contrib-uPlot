@@ -27,6 +27,17 @@ module.exports = {
     <meta charset="utf-8">
     <title>${node.name || node.id}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        #overlay {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.5rem;
+            margin: 0.75rem;
+            color: #fff;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
     <script>
